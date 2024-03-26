@@ -1,0 +1,20 @@
+{
+    "code": "wechat_pay_h5",
+    "name": {
+        "en": "WechatPayH5",
+        "zh_cn": "微信支付h5",
+        "zh_hk": "微信支付h5"
+    },
+    "description": {
+        "en": "WechatPay qrcode and h5 pay",
+        "zh_cn": "微信支付，支持扫码支付和h5调起微信支付",
+        "zh_hk": "微信支付，支持扫码支付和h5调起微信支付"
+    },
+    "type": "payment",
+    "version": "v1.0.0",
+    "icon": "/image/logo.png",
+    "author": {
+        "name": "shellus",
+        "email": "353358601@qq.com"
+    }
+}
