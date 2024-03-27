@@ -26,6 +26,15 @@ class CallbackController extends Controller
         return json_success('', $data);
     }
 
+    public function wechatOauthCallback(Request $request) {
+//        app('log')->info('微信oauth回调', $request->all());
+//        {"code":"031GdfGdfnB","state":"123"}
+        $openid = (new Wechat())->openIDByCode($request['code']);
+        // /orders/<number>>/pay
+        $payUrl = shop_route('orders.pay', $request['state']) . '?openid=' . $openid;
+        Log::info('WechatPayH5 wechatOauthCallback $payUrl: '. $payUrl);
+        return redirect($payUrl);
+    }
     /**
      * 微信支付异步回调
      * 支付成功后会从微信支付服务器通知到该地址

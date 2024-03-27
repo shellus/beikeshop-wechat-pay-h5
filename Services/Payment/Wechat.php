@@ -100,6 +100,51 @@ class Wechat
 
         return $payUrl;
     }
+    public function getOauthUrl($order)
+    {
+        // 去这个地址获取授权，然后它会跳回来，就得到了openid
+        https://open.weixin.qq.com/connect/oauth2/authorize?
+        //appid=wx520c15f417810387&
+        //redirect_uri=https%3A%2F%2Fchong.qq.com%2Fphp%2Findex.php%3Fd%3D%26c%3DwxAdapter%26m%3DmobileDeal%26showwxpaytitle%3D1%26vb2ctag%3D4_2030_5_1194_60&
+        //response_type=code&
+        //scope=snsapi_base&
+        //state=123&
+        //connect_redirect=1#wechat_redirect
+
+        // $back 这个url其实就是下面的 openIDByCode 方法，用code换取openid
+        $back = rawurlencode(config('app.url') . '/callback/wechat_pay_h5/oauth');
+        $url = "https://open.weixin.qq.com/connect/oauth2/authorize?scope=snsapi_base&redirect_uri={$back}&appid={$this->appId}&response_type=code&state={$order->number}#wechat_redirect";
+        return $url;
+    }
+    public function openIDByCode($code)
+    {
+        // 文档：https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webpage_authorization.html
+        $url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid={$this->appId}&secret={$this->appSecret}&code={$code}&grant_type=authorization_code";
+        $response = (new \GuzzleHttp\Client)->get($url);
+        $content = $response->getBody()->getContents();
+        Log::info('WechatPayH5 openIDByCode $url: '. $url . '; $content: ' . $content);
+        $data = json_decode($content, true);
+        return $data['openid'];
+    }
+    /**
+     * 获取支付链接
+     * @param Order $order
+     * @return string
+     * @throws \Exception
+     */
+    public function getJsUrl($openid, Order $order): string
+    {
+        $attributes = $this->getOrderAttributes($order);
+        $prepay_id    = $this->payment->jsPay($openid, $attributes['subject'], $attributes['out_trade_no'],
+            $attributes['total_fee'], $this->notifyUrl);
+        // 上面的if里面经过 getOauthUrl->openIDByCode 之后就有openid了然后就跳回这里了
+        // todo 这里改掉，js支付是需要一组参数和签名，而不是一个url
+        // 文档：https://pay.weixin.qq.com/docs/merchant/apis/jsapi-payment/jsapi-transfer-payment.html
+        Log::info("NotifyUrl: {$this->notifyUrl}");
+        Log::info("PayUrl: {$payUrl}");
+
+        return $payUrl;
+    }
     /**
      * 获取支付链接
      * @param Order $order

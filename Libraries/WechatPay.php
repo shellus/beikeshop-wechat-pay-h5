@@ -16,6 +16,7 @@ class WechatPay
 {
     public const URL_NATIVEPAY = 'https://api.mch.weixin.qq.com/v3/pay/transactions/native';
     public const URL_H5PAY = 'https://api.mch.weixin.qq.com/v3/pay/transactions/h5';
+    public const URL_JSPAY = 'https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi';
 
     /**
      * 微信支付配置数组
@@ -85,6 +86,45 @@ class WechatPay
         return $resp['code_url'] ?? null;
     }
     /**
+     * 微信环境内支付（JsPay）
+     * @param $subject
+     * @param $out_trade_no
+     * @param $total_fee
+     * @param $notify_url
+     * @return string|null
+     * @throws Exception
+     */
+    public function jsPay($openid, $subject, $out_trade_no, $total_fee, $notify_url): string
+    {
+        $data = [];
+        $data['appid'] = $this->_config['appid'];
+        $data['mchid'] = $this->_config['mch_id'];
+        $data['description'] = $subject;
+        $data['out_trade_no'] = $out_trade_no;
+//        $data['time_expire'] = ; // 订单过期时间
+//        $data['attach'] = ; // 附加数据
+        $data['notify_url'] = $notify_url;
+        $data['amount'] = [
+            'total' => $total_fee,
+            'currency' => 'CNY'
+        ];
+        $data['scene_info'] = [
+            'payer_client_ip' => $_SERVER['SERVER_ADDR'] ?? '127.0.0.1',
+        ];
+        // 文档：https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webpage_authorization.html
+        // JSAPI多了下面的字段
+        // 少了 scene_info.h5_info
+        $data['payer'] = [
+            'openid' => $openid
+        ];
+
+        $resp = $this->jsonPost(self::URL_JSPAY, $data);
+        // todo {"prepay_id":"wx27180206205223b8f0bb853c1242010000"}
+        // todo JS下单只返回了这个？？？
+
+        return $resp['prepay_id'];
+    }
+    /**
      * H5支付
      * @param $subject
      * @param $out_trade_no
@@ -126,7 +166,8 @@ class WechatPay
             $resp = $this->client
                 ->chain($url)
                 ->post(['json' => $data]);
-            $content = $resp->getBody();
+            $content = $resp->getBody()->getContents();
+            Log::info('WechatPayH5 jsonPost response: '. $content);
         } catch (\Exception $e) {
             // 进行错误处理
             if ($e instanceof RequestException && $e->hasResponse()) {
