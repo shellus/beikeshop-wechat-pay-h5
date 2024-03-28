@@ -1,8 +1,12 @@
 <script src="{{ asset('vendor/qrcode/qrcode.min.js') }}"></script>
 
 <div>
-  <div class="text-center my-2 fs-4">{{ __('WechatPayH5::common.scan_cod_pay') }}</div>
+  @if (!empty($native_url))
+  <div class="text-center my-2 fs-4">{{ __('WechatPayH5::common.scan_qrcode') }}</div>
   <div id="wx-qrcode" class="mt-3 d-flex justify-content-center"></div>
+  @else
+  <div class="text-center my-2 fs-4">{{ __('WechatPayH5::common.pay_loading') }}</div>
+  @endif
 </div>
 
 <script type="text/javascript">
@@ -13,10 +17,32 @@
     window.location.href = oauth_url;
   }
   // 2. JSAPI支付地址跳转
-  var js_url = '{!! $js_url ?? '' !!}';
-  if (js_url) {
-    window.location.href = js_url;
+  var js_api = {!! $js_api ?? 'null' !!};
+  if (js_api) {
+    // 下方代码来自：https://pay.weixin.qq.com/docs/merchant/apis/jsapi-payment/jsapi-transfer-payment.html
+    function onBridgeReady() {
+      // alert("支付参数：" + JSON.stringify(js_api));return;
+      WeixinJSBridge.invoke('getBrandWCPayRequest', js_api,
+        function(res) {
+          if (res.err_msg === "get_brand_wcpay_request:ok") {
+            // 使用以上方式判断前端返回,微信团队郑重提示：
+            //res.err_msg将在用户支付成功后返回ok，但并不保证它绝对可靠。
+          }
+        });
+    }
+    if (typeof WeixinJSBridge == "undefined") {
+      if (document.addEventListener) {
+        document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
+      } else if (document.attachEvent) {
+        document.attachEvent('WeixinJSBridgeReady', onBridgeReady);
+        document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);
+      }
+    } else {
+      onBridgeReady();
+    }
   }
+
+
   // 手机浏览器支付
   var h5_url = '{!! $h5_url ?? '' !!}';
   if (h5_url) {

@@ -24,9 +24,8 @@ class Bootstrap
                     $data['oauth_url'] = $wechatPay->getOauthUrl($data['order']);
                 } else {
                     // 上面的if里面经过 getOauthUrl->openIDByCode 之后就有openid了然后就跳回这里了
-                    // todo 这里改掉，js支付是需要一组参数和签名，而不是一个url
                     // 文档：https://pay.weixin.qq.com/docs/merchant/apis/jsapi-payment/jsapi-transfer-payment.html
-                    $data['js_url'] = $wechatPay->getJsUrl($openid, $data['order']);
+                    $data['js_api'] = json_encode($wechatPay->getJsApi($openid, $data['order']));
                 }
             } elseif(is_mobile()) {
                 // 手机浏览器使用h5支付
@@ -35,7 +34,6 @@ class Bootstrap
                 $data['native_url'] = $wechatPay->getNativeUrl($data['order']);
             }
             Log::info('WechatPayH5 Bootstrap $data:', $data);
-            Log::info('WechatPayH5 Bootstrap oauth_url:' . $data['oauth_url']);
             return $data;
         });
     }

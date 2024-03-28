@@ -30,6 +30,7 @@ class WechatPay
      */
     private array $_config;
 
+    private $privateKey;
     private BuilderChainable $client;
 
     /**
@@ -53,6 +54,8 @@ class WechatPay
                 $platformCertificateSerial => $platformPublicKeyInstance,
             ],
         ]);
+
+        $this->privateKey = $merchantPrivateKeyInstance;
     }
     /**
      * 二维码支付
@@ -119,11 +122,24 @@ class WechatPay
         ];
 
         $resp = $this->jsonPost(self::URL_JSPAY, $data);
-        // todo {"prepay_id":"wx27180206205223b8f0bb853c1242010000"}
-        // todo JS下单只返回了这个？？？
-
+        // $resp = {"prepay_id":"wx22180206205223b8f0bb853c12420110000"}
         return $resp['prepay_id'];
     }
+    public function getSign($appId, $prepayId) :array
+    {
+        $params = [
+            'appId'     => $appId,
+            'timeStamp' => (string)Formatter::timestamp(),
+            'nonceStr'  => Formatter::nonce(),
+            'package'   => 'prepay_id=' . $prepayId,
+        ];
+        $params += ['paySign' => Rsa::sign(
+            Formatter::joinedByLineFeed(...array_values($params)),
+            $this->privateKey
+        ), 'signType' => 'RSA'];
+        return $params;
+    }
+
     /**
      * H5支付
      * @param $subject

@@ -129,21 +129,16 @@ class Wechat
     /**
      * 获取支付链接
      * @param Order $order
-     * @return string
      * @throws \Exception
      */
-    public function getJsUrl($openid, Order $order): string
+    public function getJsApi($openid, Order $order): array
     {
         $attributes = $this->getOrderAttributes($order);
         $prepay_id    = $this->payment->jsPay($openid, $attributes['subject'], $attributes['out_trade_no'],
             $attributes['total_fee'], $this->notifyUrl);
-        // 上面的if里面经过 getOauthUrl->openIDByCode 之后就有openid了然后就跳回这里了
-        // todo 这里改掉，js支付是需要一组参数和签名，而不是一个url
+        // js支付是需要一组参数(含有签名），而不是一个url
         // 文档：https://pay.weixin.qq.com/docs/merchant/apis/jsapi-payment/jsapi-transfer-payment.html
-        Log::info("NotifyUrl: {$this->notifyUrl}");
-        Log::info("PayUrl: {$payUrl}");
-
-        return $payUrl;
+        return $this->payment->getSign($this->appId, $prepay_id);
     }
     /**
      * 获取支付链接
