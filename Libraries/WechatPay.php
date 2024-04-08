@@ -17,6 +17,7 @@ class WechatPay
     public const URL_NATIVEPAY = 'https://api.mch.weixin.qq.com/v3/pay/transactions/native';
     public const URL_H5PAY = 'https://api.mch.weixin.qq.com/v3/pay/transactions/h5';
     public const URL_JSPAY = 'https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi';
+    public const URL_APPPAY = 'https://api.mch.weixin.qq.com/v3/pay/transactions/app';
 
     /**
      * 微信支付配置数组
@@ -89,6 +90,38 @@ class WechatPay
         return $resp['code_url'] ?? null;
     }
     /**
+     * APP加载微信支付SDK支付（APP支付）
+     * @param $subject
+     * @param $out_trade_no
+     * @param $total_fee
+     * @param $notify_url
+     * @return string|null
+     * @throws Exception
+     */
+    public function appScheme($subject, $out_trade_no, $total_fee, $notify_url): string
+    {
+        $data = [];
+        $data['appid'] = $this->_config['appid'];
+        $data['mchid'] = $this->_config['mch_id'];
+        $data['description'] = $subject;
+        $data['out_trade_no'] = $out_trade_no;
+//        $data['time_expire'] = ; // 订单过期时间
+//        $data['attach'] = ; // 附加数据
+        $data['notify_url'] = $notify_url;
+        $data['amount'] = [
+            'total' => $total_fee,
+            'currency' => 'CNY'
+        ];
+        $data['scene_info'] = [
+            'payer_client_ip' => $_SERVER['SERVER_ADDR'] ?? '127.0.0.1',
+        ];
+        // 文档：https://pay.weixin.qq.com/docs/merchant/apis/in-app-payment/direct-jsons/app-prepay.html
+
+        $resp = $this->jsonPost(self::URL_APPPAY, $data);
+        // $resp = {"prepay_id":"wx22180206205223b8f0bb853c12420110000"}
+        return $resp['prepay_id'];
+    }
+    /**
      * 微信环境内支付（JsPay）
      * @param $subject
      * @param $out_trade_no
@@ -137,6 +170,25 @@ class WechatPay
             Formatter::joinedByLineFeed(...array_values($params)),
             $this->privateKey
         ), 'signType' => 'RSA'];
+        return $params;
+    }
+    public function genSchemeParams($appId, $prepayId, $mchId) :array
+    {
+        // 《简书 - iOS不用微信SDK唤起微信支付》：https://www.jianshu.com/p/8930b4496023
+        $params = [
+            'appId'     => $appId,
+            'timeStamp' => (string)Formatter::timestamp(),
+            'nonceStr'  => Formatter::nonce(),
+            'prepayId'   => $prepayId,
+        ];
+        $sign = Rsa::sign(Formatter::joinedByLineFeed(...array_values($params)), $this->privateKey);
+        $params += [
+            'partnerId' => $mchId,
+            'packageValue' => 'Sign=WXPay',
+            'sign' => $sign,
+        ];
+        // 生成 URL Scheme, 没用，这个调不起来微信
+//        return "weixin://app/{$params['appId']}/pay/?nonceStr={$params['nonceStr']}&package=Sign%%3DWXPay&partnerId=$mchId&prepayId=$prepayId&timeStamp={$params['timeStamp']}&sign=$sign&signType=$signType";
         return $params;
     }
 

@@ -11,12 +11,20 @@ class Bootstrap
         $this->beforeOrderPay();
     }
 
+    private function is_wechat($ua)
+    {
+        return strpos($ua, 'MicroMessenger') !== false;
+    }
+    private function is_webview($ua)
+    {
+        return strpos($ua, 'StarLock') !== false;
+    }
     public function beforeOrderPay()
     {
         add_hook_filter('service.payment.pay.data', function ($data) {
             // 不同的支付类型的说明、文档、用法、请参阅文档《微信支付流程整理-CZDJ版.xmind》
             $wechatPay = new Wechat();
-            if (strpos(request()->header('User-Agent'), 'MicroMessenger') !== false) {
+            if ($this->is_wechat(request()->header('User-Agent'))) {
                 // 微信环境内需要使用jsAPI支付
                 $openid = request()->get('openid');
                 if (empty($openid)) {
@@ -27,6 +35,9 @@ class Bootstrap
                     // 文档：https://pay.weixin.qq.com/docs/merchant/apis/jsapi-payment/jsapi-transfer-payment.html
                     $data['js_api'] = json_encode($wechatPay->getJsApi($openid, $data['order']));
                 }
+            } elseif($this->is_webview(request()->header('User-Agent'))) {
+                // webview里面需要支持打开schemeUrl 《给配件商城的webview加上scheme跳转支持》：https://zhuanlan.zhihu.com/p/111078897
+                $data['app_params'] = json_encode($wechatPay->getAppPayParams($data['order']));
             } elseif(is_mobile()) {
                 // 手机浏览器使用h5支付
                 $data['h5_url'] = $wechatPay->getH5Url($data['order']);

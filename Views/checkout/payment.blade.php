@@ -41,6 +41,22 @@
       onBridgeReady();
     }
   }
+  // 3. APP支付，需要和APP通信
+  var app_params = {!! $app_params ?? 'null' !!};
+  if (app_params) {
+    if (typeof FlutterBridge == "undefined") {
+      alert('FlutterBridge 对象不存在，无法调用APP支付');
+    } else {
+      FlutterBridge.postMessage(JSON.stringify({
+        action: 'WechatPayParams',
+        data: app_params,
+        callFun: 'AppWechatPayCallback'
+      }))
+    }
+  }
+  function AppWechatPayCallback() {
+    console.log('AppWechatPayCallback !')
+  }
 
 
   // 手机浏览器支付

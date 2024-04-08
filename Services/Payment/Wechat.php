@@ -131,6 +131,20 @@ class Wechat
      * @param Order $order
      * @throws \Exception
      */
+    public function getAppPayParams(Order $order): array
+    {
+        $attributes = $this->getOrderAttributes($order);
+        $prepay_id    = $this->payment->appScheme($attributes['subject'], $attributes['out_trade_no'],
+            $attributes['total_fee'], $this->notifyUrl);
+        // APP支付生成的是一个url，这是一种非常规用法，因为我们在webview里面使用，没法调用SDK，智能用这种方法调起支付
+        // 文档：https://pay.weixin.qq.com/docs/merchant/apis/jsapi-payment/jsapi-transfer-payment.html
+        return $this->payment->genSchemeParams($this->appId, $prepay_id, $this->mchId);
+    }
+    /**
+     * 获取支付链接
+     * @param Order $order
+     * @throws \Exception
+     */
     public function getJsApi($openid, Order $order): array
     {
         $attributes = $this->getOrderAttributes($order);
