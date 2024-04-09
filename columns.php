@@ -11,8 +11,8 @@ return [
         'name'      => 'app_secret',
         'label_key' => 'common.app_secret',
         'type'      => 'string',
-        'description' => '微信开放平台中服务号的APPSECRET',
-        'required'  => true,
+        'description' => '微信开放平台中服务号的APPSECRET，配置JS支付才需要，用来获取openid',
+        'required'  => false,
     ],
     [
         'name'      => 'merchant_id',
@@ -49,5 +49,19 @@ return [
         'type'      => 'string',
         'description' => '平台公钥，在微信商户后台-账户中心-API安全-平台证书-平台证书管理，放置于项目storage/app/platform.pem，然后这里填入storage/app/platform.pem',
         'required'  => true,
-    ]
+    ],
+    [
+        'name'      => 'ua_string',
+        'label_key' => 'common.ua_string',
+        'type'      => 'string',
+        'description' => 'APP中webview的User-Agent，用于微信支付H5调起APP支付时的User-Agent检测，例如："myApp1.0"，需要对应APP中的User-Agent设置，webview默认是没有特征的，一定是APP开发人员手动设置才有',
+        'required'  => false,
+    ],
+    [
+        'name'      => 'app_id_for_app',
+        'label_key' => 'common.app_id_for_app',
+        'type'      => 'string',
+        'description' => '微信开放平台中移动应用的APPID',
+        'required'  => false,
+    ],
 ];

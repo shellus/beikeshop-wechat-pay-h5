@@ -17,7 +17,11 @@ class Bootstrap
     }
     private function is_webview($ua)
     {
-        return strpos($ua, 'StarLock') !== false;
+        $str = plugin_setting('wechat_pay_h5.ua_string');
+        if (empty($str)) {
+            return false;
+        }
+        return strpos($ua, $str) !== false;
     }
     public function beforeOrderPay()
     {

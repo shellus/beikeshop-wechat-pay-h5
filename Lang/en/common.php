@@ -12,4 +12,6 @@ return [
     'merchant_cert_serial_no' => 'Merchant certificate serial number',
     'merchant_cert_key_path' => 'Merchant private key',
     'merchant_cert_path' => 'Platform public key',
+    'ua_string' => 'webview User-Agent string',
+    'app_id_for_app' => 'AppID(APP)',
 ];

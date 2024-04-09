@@ -23,6 +23,7 @@ class Wechat
     private string $certPath = '';
 
     private string $certKeyPath = '';
+    private string $appIdForApp = '';
 
     public WechatPay $payment;
 
@@ -30,6 +31,7 @@ class Wechat
     {
         $this->appId     = plugin_setting('wechat_pay_h5.app_id');
         $this->appSecret = plugin_setting('wechat_pay_h5.app_secret');
+        $this->appIdForApp = plugin_setting('wechat_pay_h5.app_id_for_app');
         $this->mchId     = plugin_setting('wechat_pay_h5.merchant_id');
         $this->certSerialNo    = plugin_setting('wechat_pay_h5.merchant_cert_serial_no');
         $this->certPath    = plugin_setting('wechat_pay_h5.merchant_cert_path');
@@ -42,9 +44,9 @@ class Wechat
 
         $this->payment = new WechatPay([
             'appid'       => $this->appId,
+            'app_id_for_app'   => $this->appIdForApp,
             'mch_id'      => $this->mchId,
             'apikey'      => $this->apiKey,
-            'appsecret'   => $this->appSecret,
             'cert_serial_no'   => $this->certSerialNo,
             'cert_path'   => base_path($this->certPath),
             'cert_key_path'   => base_path($this->certKeyPath),
@@ -138,7 +140,7 @@ class Wechat
             $attributes['total_fee'], $this->notifyUrl);
         // APP支付生成的是一个url，这是一种非常规用法，因为我们在webview里面使用，没法调用SDK，智能用这种方法调起支付
         // 文档：https://pay.weixin.qq.com/docs/merchant/apis/jsapi-payment/jsapi-transfer-payment.html
-        return $this->payment->genSchemeParams($this->appId, $prepay_id, $this->mchId);
+        return $this->payment->genSchemeParams($prepay_id);
     }
     /**
      * 获取支付链接
@@ -152,7 +154,7 @@ class Wechat
             $attributes['total_fee'], $this->notifyUrl);
         // js支付是需要一组参数(含有签名），而不是一个url
         // 文档：https://pay.weixin.qq.com/docs/merchant/apis/jsapi-payment/jsapi-transfer-payment.html
-        return $this->payment->getSign($this->appId, $prepay_id);
+        return $this->payment->getSign($prepay_id);
     }
     /**
      * 获取支付链接

@@ -24,7 +24,6 @@ class WechatPay
      * appid        公众账号appid
      * mch_id       商户号
      * apikey       加密key
-     * appsecret    公众号appsecret
      * cert_serial_no 商户API证书序列号
      * cert_path    证书路径
      * cert_key_path    证书密钥路径
@@ -101,7 +100,10 @@ class WechatPay
     public function appScheme($subject, $out_trade_no, $total_fee, $notify_url): string
     {
         $data = [];
-        $data['appid'] = $this->_config['appid'];
+        $data['appid'] = $this->_config['app_id_for_app'];
+        if (empty($data['appid'])) {
+            throw new \Exception('app_id_for_app is empty');
+        }
         $data['mchid'] = $this->_config['mch_id'];
         $data['description'] = $subject;
         $data['out_trade_no'] = $out_trade_no;
@@ -158,10 +160,10 @@ class WechatPay
         // $resp = {"prepay_id":"wx22180206205223b8f0bb853c12420110000"}
         return $resp['prepay_id'];
     }
-    public function getSign($appId, $prepayId) :array
+    public function getSign($prepayId) :array
     {
         $params = [
-            'appId'     => $appId,
+            'appId'     => $this->_config['appid'],
             'timeStamp' => (string)Formatter::timestamp(),
             'nonceStr'  => Formatter::nonce(),
             'package'   => 'prepay_id=' . $prepayId,
@@ -172,18 +174,18 @@ class WechatPay
         ), 'signType' => 'RSA'];
         return $params;
     }
-    public function genSchemeParams($appId, $prepayId, $mchId) :array
+    public function genSchemeParams($prepayId) :array
     {
         // 《简书 - iOS不用微信SDK唤起微信支付》：https://www.jianshu.com/p/8930b4496023
         $params = [
-            'appId'     => $appId,
+            'appId'     => $this->_config['app_id_for_app'],
             'timeStamp' => (string)Formatter::timestamp(),
             'nonceStr'  => Formatter::nonce(),
             'prepayId'   => $prepayId,
         ];
         $sign = Rsa::sign(Formatter::joinedByLineFeed(...array_values($params)), $this->privateKey);
         $params += [
-            'partnerId' => $mchId,
+            'partnerId' => $this->_config['mch_id'],
             'packageValue' => 'Sign=WXPay',
             'sign' => $sign,
         ];
